@@ -5,7 +5,7 @@
 #include <time.h>
 #include <math.h>
 
-#define MATRIX_SIZE 2
+#define MATRIX_SIZE 1000
 
 using namespace std;
 
@@ -67,26 +67,79 @@ int main() {
 }
 
 void multiplyMatrix(double matrixA[MATRIX_SIZE][MATRIX_SIZE], double matrixB[MATRIX_SIZE][MATRIX_SIZE], double resutlMatrix[MATRIX_SIZE][MATRIX_SIZE]) {
-	for (int i = 0; i < MATRIX_SIZE; i++) {
-		for (int j = 0; j < MATRIX_SIZE; j++) {
-			resutlMatrix[i][j] = 0;
-			for (int k = 0; k < MATRIX_SIZE; k++) {
-				resutlMatrix[i][j] += matrixA[i][k] * matrixB[k][j];
+	for (int i = 0; i < MATRIX_SIZE; i++) 
+	{
+		for (int j = 0; j < MATRIX_SIZE; j++) 
+		{
+			double result = 0;
+#pragma omp parallel for reduction(+ : result)
+			for (int k = 0; k < MATRIX_SIZE; k++) 
+			{
+				result += matrixA[i][k] * matrixB[k][j];
 			}
+			resutlMatrix[i][j] = result;
 		}
 	}
 }
 
 bool checkMatrix(double matrixA[MATRIX_SIZE][MATRIX_SIZE], double matrixB[MATRIX_SIZE][MATRIX_SIZE], double matrixC[MATRIX_SIZE][MATRIX_SIZE]) {
 	bool same = true;
-	for (int i = 0; i < MATRIX_SIZE; i++)
+#pragma omp parallel sections 
 	{
-		for (int j = 0; j < MATRIX_SIZE; j++)
+#pragma omp section
 		{
-			if (trunc(1000. * matrixA[i][j]) != trunc(1000. * matrixB[i][j])
-				|| trunc(1000. * matrixB[i][j]) != trunc(1000. * matrixC[i][j]))
+			for (int i = 0; i < MATRIX_SIZE; i+=4)
 			{
-				same = false;
+				for (int j = 0; j < MATRIX_SIZE; j++)
+				{
+					if (trunc(1000. * matrixA[i][j]) != trunc(1000. * matrixB[i][j])
+						|| trunc(1000. * matrixB[i][j]) != trunc(1000. * matrixC[i][j]))
+					{
+						same = false;
+					}
+				}
+			}
+		}
+#pragma omp section
+		{
+			for (int i = 1; i < MATRIX_SIZE; i += 4)
+			{
+				for (int j = 0; j < MATRIX_SIZE; j++)
+				{
+					if (trunc(1000. * matrixA[i][j]) != trunc(1000. * matrixB[i][j])
+						|| trunc(1000. * matrixB[i][j]) != trunc(1000. * matrixC[i][j]))
+					{
+						same = false;
+					}
+				}
+			}
+		}
+#pragma omp section
+		{
+			for (int i = 2; i < MATRIX_SIZE; i += 4)
+			{
+				for (int j = 0; j < MATRIX_SIZE; j++)
+				{
+					if (trunc(1000. * matrixA[i][j]) != trunc(1000. * matrixB[i][j])
+						|| trunc(1000. * matrixB[i][j]) != trunc(1000. * matrixC[i][j]))
+					{
+						same = false;
+					}
+				}
+			}
+		}
+#pragma omp section
+		{
+			for (int i = 3; i < MATRIX_SIZE; i += 4)
+			{
+				for (int j = 0; j < MATRIX_SIZE; j++)
+				{
+					if (trunc(1000. * matrixA[i][j]) != trunc(1000. * matrixB[i][j])
+						|| trunc(1000. * matrixB[i][j]) != trunc(1000. * matrixC[i][j]))
+					{
+						same = false;
+					}
+				}
 			}
 		}
 	}

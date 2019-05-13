@@ -5,8 +5,6 @@
 
 using namespace std;
 
-double stepsize = 0.001;
-
 // Wyrazenie
 double expression(double x, double y) 
 { 
@@ -18,19 +16,28 @@ double doubleIntegral(double lowerX, double upperX, double lowerY, double upperY
 {
 	double sum = 0;
 
-	for (double i = lowerX; i <= upperX; i += stepsize)
+	// Iloœæ prostok¹tów
+	int n = 10000;
+
+	// Krok
+	double hx = (upperX - lowerX) / (double)n;
+	double hy = (upperY - lowerY) / (double)n;
+
+#pragma omp parallel for reduction(+ : sum)
+	for (int i = 1; i <= n; i++)
 	{
-		for (double j = lowerY; j <= upperY; j += stepsize)
-		{
-			sum += expression(i, j);
+		for (int j = 1; j <= n; j++)
+		{ 
+			sum += expression(lowerX + (i*hx), lowerY + (j*hy)) * hx * hy;
 		}
 	}
-	double integral = sum * stepsize * stepsize;
+	double integral = sum;
 	return integral;
 }
 
 int main()
 {
+	// Przedzia³y
 	double xp = 1.0;
 	double xk = 2.0;
 

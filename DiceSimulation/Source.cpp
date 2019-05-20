@@ -45,6 +45,7 @@ void simulation(int number, int hits) {
 	int dice[DICES];
 
 	// Ustawienie kostek
+#pragma omp parallel for
 	for (int i = 0; i < DICES; i++)
 	{
 		dice[i] = number;
@@ -54,6 +55,7 @@ void simulation(int number, int hits) {
 	for (int i = 0; i < hits; i++)
 	{
 		czekaj(500);
+#pragma omp parallel for
 		for (int j = 0; j < DICES; j++)
 		{
 			if (1 == rand() % 20 + 1)
@@ -64,14 +66,20 @@ void simulation(int number, int hits) {
 
 		// Wczytanie kostek
 		int meshSum[] = { 0, 0, 0, 0, 0, 0 };
+		int sum = 0;
+
+#pragma omp parallel for
 		for (int nr = 0; nr < DICES; nr++)
 		{
+#pragma omp critical
 			meshSum[dice[nr] - 1]++;
 		}
-		int sum = meshSum[0] + meshSum[1] + meshSum[2] + meshSum[3] + meshSum[4] + meshSum[5];
-
+		sum = meshSum[0] + meshSum[1] + meshSum[2] + meshSum[3] + meshSum[4] + meshSum[5];
+			
+		
 		// Liczenie entriopii
 		double entropy = (DICES * log(DICES) - DICES) + 0.5*log(2 * M_PI * DICES);
+#pragma omp parallel for reduction(- : entropy)
 		for (int k = 0; k < 6; k++)
 		{
 			if (meshSum[k] != 0)

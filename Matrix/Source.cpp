@@ -5,7 +5,7 @@
 #include <time.h>
 #include <math.h>
 
-#define MATRIX_SIZE 1000
+#define MATRIX_SIZE 100
 
 using namespace std;
 
